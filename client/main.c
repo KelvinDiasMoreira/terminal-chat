@@ -7,7 +7,7 @@
 SOCKET createSocket()
 {
     SOCKET socketCreated = INVALID_SOCKET;
-    socketCreated = socket(AF_INET, SOCK_STREAM, 0);
+    socketCreated = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socketCreated == INVALID_SOCKET)
     {
         WSACleanup();
@@ -42,10 +42,10 @@ int main()
         WSACleanup();
         return 1;
     }
-    
+
     char *bufferToSend = "Teste";
     int sendResult;
-    sendResult = send(socketCreated, bufferToSend, strlen(bufferToSend), 0);
+    sendResult = send(socketCreated, bufferToSend, (int)strlen(bufferToSend), 0);
     if (sendResult == SOCKET_ERROR)
     {
         printf("send failed: %d\n", WSAGetLastError());
@@ -53,7 +53,7 @@ int main()
         WSACleanup();
         return 1;
     }
-
+    printf("sended message\n");
     closesocket(socketCreated);
     WSACleanup();
     return 0;
