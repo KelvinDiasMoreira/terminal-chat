@@ -10,8 +10,10 @@ SOCKET createSocket()
     socketCreated = socket(AF_INET, SOCK_STREAM, 0);
     if (socketCreated == INVALID_SOCKET)
     {
-        return socketCreated;
+        WSACleanup();
+        exit(1);
     }
+    printf("socket created\n");
     return socketCreated;
 }
 
@@ -25,12 +27,6 @@ int main()
     }
 
     SOCKET socketCreated = createSocket();
-    if (socketCreated == INVALID_SOCKET)
-    {
-        printf("error on create socket");
-        WSACleanup();
-        return 1;
-    }
 
     struct sockaddr_in service;
     service.sin_family = AF_INET;
