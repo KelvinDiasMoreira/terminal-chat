@@ -64,14 +64,7 @@ int main()
         return 1;
     }
 
-    /**
-     * empty buffer
-     */
-    for (size_t i = 0; i < BUFFER_SIZE; i++)
-    {
-        buffer[i] = '-';
-    }
-    recvResult = recv(socketCreated, buffer, BUFFER_SIZE, MSG_PEEK);
+    recvResult = recv(socketCreated, buffer, BUFFER_SIZE, 0);
     if (recvResult == SOCKET_ERROR)
     {
         printf("failed on recv: %d\n", WSAGetLastError());

@@ -19,6 +19,7 @@ SOCKET createSocket()
 
 int main()
 {
+    int func_result;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
     {
@@ -29,31 +30,37 @@ int main()
     SOCKET socketCreated = createSocket();
 
     struct sockaddr_in service;
-    int connect_result;
     service.sin_family = AF_INET;
     service.sin_addr.s_addr = inet_addr("127.0.0.1");
     service.sin_port = htons(PORT);
 
-    connect_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
-    if (connect_result == SOCKET_ERROR)
+    func_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
+    if (func_result == SOCKET_ERROR)
     {
         wprintf(L"connect failed with error %d\n", WSAGetLastError());
         closesocket(socketCreated);
         WSACleanup();
         return 1;
     }
-
-    char *bufferToSend = "Teste";
-    int sendResult;
-    sendResult = send(socketCreated, bufferToSend, (int)strlen(bufferToSend), 0);
-    if (sendResult == SOCKET_ERROR)
+    printf("connected to the socket: %d\n", func_result);
+    char *bufferToSend = "teste";
+    func_result = send(socketCreated, bufferToSend, (int)strlen(bufferToSend), 0);
+    if (func_result == SOCKET_ERROR)
     {
         printf("send failed: %d\n", WSAGetLastError());
         closesocket(socketCreated);
         WSACleanup();
         return 1;
     }
-    printf("sended message\n");
+    printf("bytes sended %d\n", func_result);
+    func_result = shutdown(socketCreated, SD_SEND);
+    if (func_result == SOCKET_ERROR)
+    {
+        printf("shutdown failed: %d\n", WSAGetLastError());
+        closesocket(socketCreated);
+        WSACleanup();
+        return 1;
+    }
     closesocket(socketCreated);
     WSACleanup();
     return 0;
