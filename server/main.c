@@ -51,6 +51,10 @@ int main()
         return 1;
     }
 
+    while (1){
+        printf("waiting...\n");
+    }
+
     closesocket(socketCreated);
     WSACleanup();
     return 0;
