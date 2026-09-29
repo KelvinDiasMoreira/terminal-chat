@@ -3,7 +3,6 @@
 #include <ws2def.h>
 
 #define PORT 8081
-#define BUFFER_SIZE 1024
 
 SOCKET createSocket()
 {
@@ -30,49 +29,29 @@ int main()
     SOCKET socketCreated = createSocket();
 
     struct sockaddr_in service;
-    int bind_result;
+    int connect_result;
     service.sin_family = AF_INET;
     service.sin_addr.s_addr = inet_addr("127.0.0.1");
     service.sin_port = htons(PORT);
 
-    bind_result = bind(socketCreated, (SOCKADDR *)&service, sizeof(service));
-    if (bind_result == SOCKET_ERROR)
+    connect_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
+    if (connect_result == SOCKET_ERROR)
     {
-        wprintf(L"bind failed with error %d\n", WSAGetLastError());
+        wprintf(L"connect failed with error %d\n", WSAGetLastError());
         closesocket(socketCreated);
         WSACleanup();
         return 1;
     }
-
-    if (listen(socketCreated, 10) == SOCKET_ERROR)
+    
+    char *bufferToSend = "Teste";
+    int sendResult;
+    sendResult = send(socketCreated, bufferToSend, strlen(bufferToSend), 0);
+    if (sendResult == SOCKET_ERROR)
     {
-        wprintf(L"listen failed with error %d\n", WSAGetLastError());
+        printf("send failed: %d\n", WSAGetLastError());
         closesocket(socketCreated);
         WSACleanup();
         return 1;
-    }
-    int recvResult;
-    char buffer[BUFFER_SIZE];
-
-    /**
-     * empty buffer
-     */
-    for (size_t i = 0; i < BUFFER_SIZE; i++)
-    {
-        buffer[i] = '-';
-    }
-
-    while (1)
-    {
-        recvResult = recv(socketCreated, buffer, BUFFER_SIZE, 0);
-        // printf("%d", recvResult);
-        if (recvResult > 0)
-        {
-            for (size_t i = 0; i < BUFFER_SIZE; i++)
-            {
-                printf("%c", buffer[i]);
-            }
-        }
     }
 
     closesocket(socketCreated);
