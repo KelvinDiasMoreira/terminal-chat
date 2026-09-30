@@ -3,6 +3,7 @@
 #include <ws2def.h>
 
 #define PORT 8081
+#define BUFFER_SIZE 1024
 
 SOCKET createSocket()
 {
@@ -17,8 +18,22 @@ SOCKET createSocket()
     return socketCreated;
 }
 
+// char *who_is_there()
+void who_is_there()
+{
+    char name[50];
+    printf("Qual o seu nome: ");
+    scanf("%s", &name);
+    printf("%s", name);
+    // return name;
+}
+
 int main()
 {
+    // char *client_name = who_is_there();
+    who_is_there();
+
+    char buffer[BUFFER_SIZE];
     int func_result;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
@@ -61,6 +76,22 @@ int main()
         WSACleanup();
         return 1;
     }
+
+    while (1)
+    {
+        func_result = recv(socketCreated, buffer, BUFFER_SIZE, 0);
+        if (func_result > 0)
+        {
+            printf("bytes received: %d\n", func_result);
+            buffer[func_result] = '\0';
+            for (size_t i = 0; i < func_result; i++)
+            {
+                printf("%c", buffer[i]);
+            }
+            printf("\n");
+        }
+    }
+
     closesocket(socketCreated);
     WSACleanup();
     return 0;
