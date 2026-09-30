@@ -50,23 +50,25 @@ void socket_set_listen(SOCKET *socket)
     }
 }
 
-void socket_set_accept(SOCKET *socket)
+SOCKET socket_set_accept(SOCKET *socket)
 {
     SOCKET deref_socket = (SOCKET)*socket;
-    printf("waiting connections...\n");
-    if (accept(deref_socket, 0, 0) == SOCKET_ERROR)
+    SOCKET accept_socket = accept(deref_socket, 0, 0);
+    if (accept_socket == INVALID_SOCKET)
     {
         wprintf(L"accept failed with error %d\n", WSAGetLastError());
         closesocket(deref_socket);
         WSACleanup();
         exit(1);
     }
+    return accept_socket;
 }
 
 int main()
 {
     char buffer[BUFFER_SIZE];
     int intResult;
+    int sentResult;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
     {
@@ -76,31 +78,34 @@ int main()
     SOCKET socketCreated = createSocket();
     socket_set_bind(&socketCreated);
     socket_set_listen(&socketCreated);
-    socket_set_accept(&socketCreated);
-    /**
-     * Now wtf is happen... i don't know
-     */
-    intResult = recv(socketCreated, buffer, BUFFER_SIZE, 0);
-    if (intResult == SOCKET_ERROR)
+
+    while (1)
     {
-        printf("failed on recv: %d\n", WSAGetLastError());
-        closesocket(socketCreated);
-        WSACleanup();
-        return 1;
+        SOCKET connection_socket = socket_set_accept(&socketCreated);
+        do
+        {
+            intResult = recv(connection_socket, buffer, BUFFER_SIZE, 0);
+            if (intResult > 0)
+            {
+                printf("bytes received: %d\n", intResult);
+                buffer[intResult] = '\0';
+                for (size_t i = 0; i < intResult; i++)
+                {
+                    printf("%c", buffer[i]);
+                }
+                printf("\n");
+            }
+            else if (intResult == 0)
+                printf("connection closing...\n");
+            else
+            {
+                printf("recv failed: %d\n", WSAGetLastError());
+                closesocket(connection_socket);
+                WSACleanup();
+                return 1;
+            }
+        } while (intResult > 0);
     }
-    printf("%d", intResult);
-    // while (1)
-    // {
-    //     recvResult = recv(socketCreated, buffer, BUFFER_SIZE, MSG_PEEK);
-    //     if (recvResult != 1)
-    //     {
-    //         printf("%d", recvResult);
-    //         // for (size_t i = 0; i < BUFFER_SIZE; i++)
-    //         // {
-    //         //     printf("%c", buffer[i]);
-    //         // }
-    //     }
-    // }
 
     closesocket(socketCreated);
     WSACleanup();
