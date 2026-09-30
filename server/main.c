@@ -82,6 +82,7 @@ int main()
     while (1)
     {
         SOCKET connection_socket = socket_set_accept(&socketCreated);
+        printf("new conection -> %p\n", connection_socket);
         do
         {
             intResult = recv(connection_socket, buffer, BUFFER_SIZE, 0);
@@ -94,6 +95,12 @@ int main()
                     printf("%c", buffer[i]);
                 }
                 printf("\n");
+                sentResult = send(connection_socket, buffer, intResult, 0);
+                if (sentResult > 0)
+                {
+                    sentResult = shutdown(connection_socket, SD_SEND);
+                    printf("%d\n", sentResult);
+                }
             }
             else if (intResult == 0)
                 printf("connection closing...\n");
@@ -102,7 +109,6 @@ int main()
                 printf("recv failed: %d\n", WSAGetLastError());
                 closesocket(connection_socket);
                 WSACleanup();
-                return 1;
             }
         } while (intResult > 0);
     }
