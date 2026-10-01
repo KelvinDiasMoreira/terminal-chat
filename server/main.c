@@ -103,7 +103,9 @@ int main()
                 }
             }
             else if (intResult == 0)
-                printf("connection closing...\n");
+            {
+                // printf("connection closing...\n");
+            }
             else
             {
                 printf("recv failed: %d\n", WSAGetLastError());

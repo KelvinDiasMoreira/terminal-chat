@@ -18,21 +18,29 @@ SOCKET createSocket()
     return socketCreated;
 }
 
-// char *who_is_there()
-void who_is_there()
+char *who_is_there()
 {
-    char name[50];
+    /*we need free this*/
+    char *name = (char *)malloc(sizeof(char) * 51);
+    if (name == NULL)
+    {
+        printf("failed see who is there....\n");
+        exit(1);
+    }
     printf("Qual o seu nome: ");
-    scanf("%s", &name);
-    printf("%s", name);
-    // return name;
+    if (fgets(name, 51, stdin) == NULL)
+    {
+        printf("failed see who is there....\n");
+        free(name);
+        exit(1);
+    }
+    name[strcspn(name, "\n")] = '\0';
+    return name;
 }
 
 int main()
 {
-    // char *client_name = who_is_there();
-    who_is_there();
-
+    char *client_name = who_is_there();
     char buffer[BUFFER_SIZE];
     int func_result;
     WSADATA wsa_data = {0};
@@ -58,8 +66,7 @@ int main()
         return 1;
     }
     printf("connected to the socket: %d\n", func_result);
-    char *bufferToSend = "teste";
-    func_result = send(socketCreated, bufferToSend, (int)strlen(bufferToSend), 0);
+    func_result = send(socketCreated, client_name, (int)strlen(client_name), 0);
     if (func_result == SOCKET_ERROR)
     {
         printf("send failed: %d\n", WSAGetLastError());
@@ -91,7 +98,6 @@ int main()
             printf("\n");
         }
     }
-
     closesocket(socketCreated);
     WSACleanup();
     return 0;
