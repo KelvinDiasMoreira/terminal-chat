@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <ws2def.h>
+#include <windows.h>
 
 #define PORT 8081
 #define BUFFER_SIZE 1024
@@ -92,6 +93,16 @@ int main()
         WSACleanup();
         return 1;
     }
+    
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    if (!CreateProcess(NULL, 0, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
+    {
+        printf("failed on create proccess\n");
+        closesocket(socketCreated);
+        WSACleanup();
+        return 1;
+    }
 
     while (1)
     {
@@ -109,7 +120,6 @@ int main()
                 printf("\n");
             }
         } while (func_result > 0);
-        send_message(socketCreated);
     }
 
     closesocket(socketCreated);
