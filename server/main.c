@@ -96,11 +96,6 @@ int main()
                 }
                 printf("\n");
                 sentResult = send(connection_socket, buffer, intResult, 0);
-                if (sentResult > 0)
-                {
-                    sentResult = shutdown(connection_socket, SD_SEND);
-                    printf("%d\n", sentResult);
-                }
             }
             else if (intResult == 0)
             {

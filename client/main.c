@@ -38,10 +38,18 @@ char *who_is_there()
     return name;
 }
 
+void send_message(SOCKET socket)
+{
+    char buffer[50];
+    printf("message: ");
+    scanf("%s\n", buffer);
+}
+
 int main()
 {
     char *client_name = who_is_there();
     char buffer[BUFFER_SIZE];
+    char send_buffer[BUFFER_SIZE];
     int func_result;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
@@ -65,7 +73,7 @@ int main()
         WSACleanup();
         return 1;
     }
-    printf("connected to the socket: %d\n", func_result);
+    printf("connected to the socket:");
     func_result = send(socketCreated, client_name, (int)strlen(client_name), 0);
     if (func_result == SOCKET_ERROR)
     {
@@ -86,18 +94,23 @@ int main()
 
     while (1)
     {
-        func_result = recv(socketCreated, buffer, BUFFER_SIZE, 0);
-        if (func_result > 0)
+        do
         {
-            printf("bytes received: %d\n", func_result);
-            buffer[func_result] = '\0';
-            for (size_t i = 0; i < func_result; i++)
+            func_result = recv(socketCreated, buffer, BUFFER_SIZE, 0);
+            if (func_result > 0)
             {
-                printf("%c", buffer[i]);
+                printf("bytes received: %d\n", func_result);
+                buffer[func_result] = '\0';
+                for (size_t i = 0; i < func_result; i++)
+                {
+                    printf("%c", buffer[i]);
+                }
+                printf("\n");
             }
-            printf("\n");
-        }
+        } while (func_result > 0);
+        send_message(socketCreated);
     }
+
     closesocket(socketCreated);
     WSACleanup();
     return 0;
