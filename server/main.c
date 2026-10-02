@@ -4,6 +4,14 @@
 
 #define PORT 8081
 #define BUFFER_SIZE 1024
+#define MAX_CONNECTION 10
+
+typedef struct
+{
+    SOCKET data[MAX_CONNECTION];
+    int size;
+    int capacity;
+} SOCKET_CONNECTIONS;
 
 SOCKET createSocket()
 {
@@ -65,11 +73,20 @@ SOCKET socket_set_accept(SOCKET *socket)
     return accept_socket;
 }
 
+int add_connection(SOCKET_CONNECTIONS *connections, SOCKET socket)
+{
+    if (connections->size == connections->capacity)
+        return 0;
+    connections->data[connections->size] = socket;
+    connections->size++;
+}
+
 int main()
 {
+    SOCKET_CONNECTIONS connections = {.capacity = MAX_CONNECTION};
     char buffer[BUFFER_SIZE];
-    int intResult;
-    int sentResult;
+    int int_result;
+    int sent_result;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
     {
@@ -83,22 +100,28 @@ int main()
     while (1)
     {
         SOCKET connection_socket = socket_set_accept(&socketCreated);
-        printf("new conection -> %p\n", connection_socket);
+        if (add_connection(&connections, connection_socket) == 0)
+        {
+            printf("limit connection reached\n");
+            closesocket(connection_socket);
+            WSACleanup();
+        }
+        printf("connection pool -> %d limit -> %d\n", connections.size, connections.capacity);
         do
         {
-            intResult = recv(connection_socket, buffer, BUFFER_SIZE, 0);
-            if (intResult > 0)
+            int_result = recv(connection_socket, buffer, BUFFER_SIZE, 0);
+            if (int_result > 0)
             {
-                printf("bytes received: %d\n", intResult);
-                buffer[intResult] = '\0';
-                for (size_t i = 0; i < intResult; i++)
+                printf("bytes received: %d\n", int_result);
+                buffer[int_result] = '\0';
+                for (size_t i = 0; i < int_result; i++)
                 {
                     printf("%c", buffer[i]);
                 }
                 printf("\n");
-                sentResult = send(connection_socket, buffer, intResult, 0);
+                sent_result = send(connection_socket, buffer, int_result, 0);
             }
-            else if (intResult == 0)
+            else if (int_result == 0)
             {
                 // printf("connection closing...\n");
             }
@@ -108,7 +131,7 @@ int main()
                 closesocket(connection_socket);
                 WSACleanup();
             }
-        } while (intResult > 0);
+        } while (int_result > 0);
     }
 
     closesocket(socketCreated);
