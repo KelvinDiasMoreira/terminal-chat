@@ -46,7 +46,13 @@ void send_message(SOCKET socket)
     scanf("%s\n", buffer);
 }
 
-int main()
+DWORD WINAPI test_fn(LPVOID lpParam)
+{
+    printf("hello from thread\n");
+    return 0;
+}
+
+int main(int argc, char *argv[])
 {
     char *client_name = who_is_there();
     char buffer[BUFFER_SIZE];
@@ -93,12 +99,12 @@ int main()
         WSACleanup();
         return 1;
     }
-    
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    if (!CreateProcess(NULL, 0, NULL, NULL, 0, 0, NULL, NULL, &si, &pi))
+
+    HANDLE tResult;
+    tResult = CreateThread(NULL, 0, test_fn, NULL, 0, 0);
+    if (tResult == 0)
     {
-        printf("failed on create proccess\n");
+        printf("failed on create thread -> %d\n", GetLastError());
         closesocket(socketCreated);
         WSACleanup();
         return 1;
@@ -121,7 +127,7 @@ int main()
             }
         } while (func_result > 0);
     }
-
+    CloseHandle(tResult);
     closesocket(socketCreated);
     WSACleanup();
     return 0;
