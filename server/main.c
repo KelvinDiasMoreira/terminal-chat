@@ -25,7 +25,8 @@ void socket_set_bind(SOCKET *socket)
     struct sockaddr_in service;
     int intResult;
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    // service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    service.sin_addr.s_addr = inet_addr("192.168.1.93");
     service.sin_port = htons(PORT);
     intResult = bind(deref_socket, (SOCKADDR *)&service, sizeof(service));
     if (intResult == SOCKET_ERROR)
@@ -82,6 +83,7 @@ int main()
     while (1)
     {
         SOCKET connection_socket = socket_set_accept(&socketCreated);
+        printf("new conection -> %p\n", connection_socket);
         do
         {
             intResult = recv(connection_socket, buffer, BUFFER_SIZE, 0);
@@ -94,15 +96,17 @@ int main()
                     printf("%c", buffer[i]);
                 }
                 printf("\n");
+                sentResult = send(connection_socket, buffer, intResult, 0);
             }
             else if (intResult == 0)
-                printf("connection closing...\n");
+            {
+                // printf("connection closing...\n");
+            }
             else
             {
                 printf("recv failed: %d\n", WSAGetLastError());
                 closesocket(connection_socket);
                 WSACleanup();
-                return 1;
             }
         } while (intResult > 0);
     }
