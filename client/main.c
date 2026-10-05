@@ -73,7 +73,7 @@ HANDLE thread_user_input()
     t_result = CreateThread(NULL, 0, see_user_input, NULL, 0, 0);
     if (t_result == 0)
     {
-        printf("failed on create thread -> %d\n", GetLastError());
+        printf("failed on create thread -> %lu\n", GetLastError());
         closesocket(socketCreated);
         WSACleanup();
         exit(1);
@@ -86,8 +86,8 @@ void socket_connect()
     int func_result;
     struct sockaddr_in service;
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = inet_addr("127.0.0.1");
-    // service.sin_addr.s_addr = inet_addr("192.168.1.93");
+    // service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    service.sin_addr.s_addr = inet_addr("192.168.1.93");
     service.sin_port = htons(PORT);
 
     func_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
@@ -126,7 +126,7 @@ void listen_socket()
 
 int main()
 {
-    char *client_name = who_is_there();
+    // char *client_name = who_is_there();
     char send_buffer[BUFFER_SIZE];
     int func_result;
     HANDLE t_result;
