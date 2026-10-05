@@ -33,8 +33,8 @@ void socket_set_bind(SOCKET *socket)
     struct sockaddr_in service;
     int intResult;
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = inet_addr("127.0.0.1");
-    // service.sin_addr.s_addr = inet_addr("192.168.1.93");
+    // service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    service.sin_addr.s_addr = inet_addr("192.168.1.93");
     service.sin_port = htons(PORT);
     intResult = bind(deref_socket, (SOCKADDR *)&service, sizeof(service));
     if (intResult == SOCKET_ERROR)
@@ -106,6 +106,7 @@ int main()
             closesocket(connection_socket);
             WSACleanup();
         }
+        printf("socket created -> %llu\n", connection_socket);
         printf("connection pool -> %d limit -> %d\n", connections.size, connections.capacity);
         do
         {
@@ -114,12 +115,10 @@ int main()
             {
                 printf("bytes received: %d\n", int_result);
                 buffer[int_result] = '\0';
-                // for (size_t i = 0; i < int_result; i++)
-                // {
-                //     printf("%c", buffer[i]);
-                // }
-                // printf("\n");
-                sent_result = send(connection_socket, buffer, int_result, 0);
+                for (size_t i = 0; i < connections.size; i++)
+                {
+                    sent_result = send(connections.data[i], buffer, int_result, 0);
+                }
             }
             else if (int_result == 0)
             {
