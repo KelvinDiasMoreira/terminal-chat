@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <winsock2.h>
 #include <ws2def.h>
 #include <windows.h>
@@ -7,6 +8,22 @@
 #define BUFFER_SIZE 1024
 
 static SOCKET socketCreated = SOCKET_ERROR;
+
+void encrypt(char buffer[], int key)
+{
+    for (int i = 0 ; i < strlen(buffer); i++)
+    {
+        buffer[i] = buffer[i] - key;
+    }
+}
+
+void decrypt(char buffer[], int key)
+{
+    for (int i = 0 ; i < strlen(buffer); i++)
+    {
+        buffer[i] = buffer[i] + key;
+    }
+}
 
 SOCKET createSocket()
 {
@@ -55,6 +72,7 @@ DWORD WINAPI see_user_input(LPVOID lpParam)
         buffer[strcspn(buffer, "\n")] = '\0';
         if (socketCreated != SOCKET_ERROR)
         {
+            encrypt(buffer, 0XAED);
             bytes_sended = send(socketCreated, buffer, (int)strlen(buffer), 0);
             if (bytes_sended == SOCKET_ERROR)
             {
@@ -86,8 +104,8 @@ void socket_connect()
     int func_result;
     struct sockaddr_in service;
     service.sin_family = AF_INET;
-    service.sin_addr.s_addr = inet_addr("127.0.0.1");
-    // service.sin_addr.s_addr = inet_addr("192.168.1.93");
+    // service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    service.sin_addr.s_addr = inet_addr("192.168.1.93");
     service.sin_port = htons(PORT);
 
     func_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
@@ -112,8 +130,8 @@ void listen_socket()
             r_result = recv(socketCreated, r_buffer, BUFFER_SIZE, 0);
             if (r_result > 0)
             {
+                decrypt(r_buffer, 0XAED);
                 r_buffer[r_result] = '\0';
-                printf("\r");
                 for (size_t i = 0; i < r_result; i++)
                 {
                     printf("%c", r_buffer[i]);
