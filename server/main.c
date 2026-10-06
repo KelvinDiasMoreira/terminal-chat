@@ -4,6 +4,16 @@
 
 #define PORT 8081
 #define BUFFER_SIZE 1024
+#define MAX_CONNECTION 10
+
+typedef struct
+{
+    SOCKET data[MAX_CONNECTION];
+    int size;
+    int capacity;
+} SOCKET_CONNECTIONS;
+
+SOCKET_CONNECTIONS connections = {.capacity = MAX_CONNECTION};
 
 SOCKET createSocket()
 {
@@ -51,25 +61,111 @@ void socket_set_listen(SOCKET *socket)
     }
 }
 
-SOCKET socket_set_accept(SOCKET *socket)
+int add_connection(SOCKET_CONNECTIONS *connections, SOCKET socket)
 {
-    SOCKET deref_socket = (SOCKET)*socket;
-    SOCKET accept_socket = accept(deref_socket, 0, 0);
-    if (accept_socket == INVALID_SOCKET)
+    if (connections->size == connections->capacity)
+        return 1;
+    for (int i = 0; i < connections->capacity; i++)
     {
-        wprintf(L"accept failed with error %d\n", WSAGetLastError());
-        closesocket(deref_socket);
-        WSACleanup();
-        exit(1);
+        if (connections->data[i] == 0)
+        {
+            connections->data[i] = socket;
+            connections->size++;
+            break;
+        }
     }
-    return accept_socket;
+    return 0;
+}
+
+void print_connections(SOCKET_CONNECTIONS connections)
+{
+    printf("[");
+    for (int i = 0; i < connections.capacity; i++)
+    {
+        if (connections.capacity - 1 == i)
+        {
+            printf("%llu", connections.data[i]);
+        }
+        else
+        {
+            printf("%llu,", connections.data[i]);
+        }
+    }
+    printf("]\n");
+}
+
+void remove_connection(SOCKET_CONNECTIONS *connections, SOCKET socket)
+{
+    for (int i = 0; i < connections->capacity; i++)
+    {
+        if (connections->data[i] == socket)
+        {
+            connections->data[i] = 0;
+            connections->size--;
+            break;
+        }
+    }
+}
+
+DWORD WINAPI handle_socket_connection(LPVOID lpParam)
+{
+    SOCKET socket_accepted = (SOCKET)lpParam;
+    printf("client connected -> %llu\n", socket_accepted);
+    char buffer[BUFFER_SIZE];
+    int int_result;
+
+    if (add_connection(&connections, socket_accepted) == 1)
+    {
+        printf("socket limit reached\n");
+        goto exit;
+    }
+    print_connections(connections);
+    while (1)
+    {
+        do
+        {
+            int_result = recv(socket_accepted, buffer, BUFFER_SIZE, 0);
+            if (int_result > 0 && int_result < BUFFER_SIZE)
+            {
+                printf("bytes received: %d from socket -> %llu\n", int_result, socket_accepted);
+                buffer[int_result] = '\0';
+                for (size_t i = 0; i < connections.size; i++)
+                {
+                    /**
+                     * we don't emit to the emitter
+                     */
+                    if (connections.data[i] != socket_accepted)
+                    {
+                        /**
+                         * we don't care if the client received the message
+                         */
+                        send(connections.data[i], buffer, int_result, 0);
+                    }
+                }
+            }
+            else if (int_result == 0)
+            {
+                printf("client closed connection\n");
+                goto exit;
+            }
+            else
+            {
+                printf("recv failed: %d\n", WSAGetLastError());
+                printf("closing connection socket -> %llu\n", socket_accepted);
+                goto exit;
+            }
+        } while (int_result > 0);
+    }
+
+exit:
+    closesocket(socket_accepted);
+    remove_connection(&connections, socket_accepted);
+    print_connections(connections);
+    return 0;
 }
 
 int main()
 {
-    char buffer[BUFFER_SIZE];
-    int intResult;
-    int sentResult;
     WSADATA wsa_data = {0};
     if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != NO_ERROR)
     {
@@ -82,33 +178,15 @@ int main()
 
     while (1)
     {
-        SOCKET connection_socket = socket_set_accept(&socketCreated);
-        printf("new conection -> %p\n", connection_socket);
-        do
+        SOCKET accepted_socket = SOCKET_ERROR;
+
+        while (accepted_socket == SOCKET_ERROR)
         {
-            intResult = recv(connection_socket, buffer, BUFFER_SIZE, 0);
-            if (intResult > 0)
-            {
-                printf("bytes received: %d\n", intResult);
-                buffer[intResult] = '\0';
-                for (size_t i = 0; i < intResult; i++)
-                {
-                    printf("%c", buffer[i]);
-                }
-                printf("\n");
-                sentResult = send(connection_socket, buffer, intResult, 0);
-            }
-            else if (intResult == 0)
-            {
-                // printf("connection closing...\n");
-            }
-            else
-            {
-                printf("recv failed: %d\n", WSAGetLastError());
-                closesocket(connection_socket);
-                WSACleanup();
-            }
-        } while (intResult > 0);
+            accepted_socket = accept(socketCreated, 0, 0);
+        }
+
+        DWORD threadId;
+        CreateThread(NULL, 0, handle_socket_connection, (LPVOID)accepted_socket, 0, &threadId);
     }
 
     closesocket(socketCreated);
