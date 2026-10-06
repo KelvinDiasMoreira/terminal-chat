@@ -86,8 +86,8 @@ void socket_connect()
     int func_result;
     struct sockaddr_in service;
     service.sin_family = AF_INET;
-    // service.sin_addr.s_addr = inet_addr("127.0.0.1");
-    service.sin_addr.s_addr = inet_addr("192.168.1.93");
+    service.sin_addr.s_addr = inet_addr("127.0.0.1");
+    // service.sin_addr.s_addr = inet_addr("192.168.1.93");
     service.sin_port = htons(PORT);
 
     func_result = connect(socketCreated, (SOCKADDR *)&service, sizeof(service));
